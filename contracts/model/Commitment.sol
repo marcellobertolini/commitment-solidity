@@ -53,15 +53,15 @@ abstract contract Commitment {
 
     }
 
-    function toDetached() internal {
+    function toDetached() private {
         state = States.Detached;
         // TODO emit event
     }
-    function toConditional() internal {
+    function toConditional() private {
         state = States.Conditional;
         // TODO emit event
     }
-    function toSatisfied() internal {
+    function toSatisfied() private {
         state = States.Satisfied;
         // TODO emit event
     }
@@ -84,7 +84,7 @@ abstract contract Commitment {
     }
 
 
-    function updateTransitionVariables() private {
+    function updateTransitionVariables() internal {
         uint currentTime = now;
         if(state == States.Conditional){
             condA = evaluateAntecedent();

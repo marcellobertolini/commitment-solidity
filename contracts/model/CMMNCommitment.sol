@@ -55,6 +55,27 @@ abstract contract CMMNCommitment is Commitment {
 
     // #### END INITIALIZATION ####
 
+    function updateTransitionVariables() internal override {
+        Commitment.updateTransitionVariables();
+        
+        uint currentTime = now;
+        if(maxA == 0){
+            inAWin = currentTime > timeCreation + minA;
+            afterAWin = false;
+        }
+        if(maxC == 0){
+            afterCWin = false;
+            if(refC == RefCs.Detached){
+                inCWin = currentTime > timeDetach;
+            }
+            else {
+                inCWin = currentTime > timeCreation;
+            }
+        }
+    }
+
+
+
     function start() public {
         onTargetStart();
     }
@@ -62,16 +83,64 @@ abstract contract CMMNCommitment is Commitment {
     // creditor and debtor can call this method to create/upload their documents
     function postDocument(bytes32 _documentId, uint _documentData) public {
         require(dbGetDocumentOwnership(_documentId) == msg.sender, "Only the document owner can update _documentId status");
-        dbStoreDocument(_documentId, _documentData, false);
-        onTick();
+        // When conditional
+        if(state == States.Conditional){
+            // is the document that triggers to detached
+            if(_documentId == dbGetStartDocumentName()){
+                dbStoreDocument(_documentId, _documentData, false);
+            }
+            // any other document does not respect the control flow. Warning is logged
+            else {
+                dbStoreDocument(_documentId, _documentData, true);
+                logWarning();
+            }
+            onTick();
+        }
+        // When detached
+        else if(state == States.Detached){
+            // if it's posted a document belonging to the conditional stage
+            if(_documentId == dbGetStartDocumentName()){
+                dbStoreDocument(_documentId, _documentData, true);
+                logWarning();
+                onTick();
+            }
+            // if it's a document that triggers the end of the detached state
+            else if(_documentId == dbGetTerminateDocumentName()){
+                dbStoreDocument(_documentId, _documentData, false);
+                onTargetEnds();
+            }
+            // any other valid documents
+            else {
+                dbStoreDocument(_documentId, _documentData, false);
+                onTick();
+            }
+        }
+        // No document is expected in other stages
+        else {
+            dbStoreDocument(_documentId, _documentData, true);
+            logWarning();
+            onTick();
+        }
+         
+        
+
+        
 
 
     }
 
+    function logWarning() private {
+        if(warning == ControlFlowStatus.OK){
+            warning = ControlFlowStatus.Warning;
+        }
+    }
+
+    function dbGetTerminateDocumentName() internal view virtual returns(bytes32);
+    function dbGetStartDocumentName() internal view virtual returns(bytes32);
 
     function dbStoreDocument(bytes32 _documentId, uint _documentData, bool _warning) internal virtual;
     function dbSetDocumentOwnership(bytes32 _documentId, address _documentOwner) internal virtual;
-    function dbGetDocumentOwnership(bytes32 _documentId)internal virtual returns(address);
+    function dbGetDocumentOwnership(bytes32 _documentId)internal view virtual returns(address);
 
 
     

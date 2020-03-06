@@ -34,7 +34,14 @@ contract TemperatureCommitment is CMMNCommitment {
     function dbSetDocumentOwnership(bytes32 _documentId, address _documentOwner) internal override{
         db.setDocumentOwnership(_documentId, _documentOwner);
     }
-    function dbGetDocumentOwnership(bytes32 _documentId)internal override returns(address) {
-        db.getDocumentOwnership(_documentId);
+    function dbGetDocumentOwnership(bytes32 _documentId)internal view override returns(address) {
+        return db.getDocumentOwnership(_documentId);
+    }
+
+    function dbGetTerminateDocumentName() internal view override returns(bytes32){
+        return "terminateDelivery";
+    }
+    function dbGetStartDocumentName() internal view override returns(bytes32){
+        return "startDelivery";
     }
 }
