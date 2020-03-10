@@ -40,13 +40,24 @@ abstract contract CMMNCommitment is Commitment {
         creditor = _creditor;
         debtor = _debtor;
     }
+    
+    // CANNOT PASS ARRAYS from client
     // set the document ownership. Only owners can update their documents
-    function setDocumentOwnewship(bytes32[] memory _documentIds, address _documentOwner) public onlyOwner onlyNull{
-        require(_documentOwner != address(0) && (_documentOwner == creditor || _documentOwner == debtor), "Document owner not valid");
+    //function setDocumentOwnewship(bytes32[] memory _documentIds, address _documentOwner) public onlyOwner onlyNull{
+    //    require(_documentOwner != address(0) && (_documentOwner == creditor || _documentOwner == debtor), "Document owner not valid");
+    //
+    //    for(uint i = 0; i < _documentIds.length; i++){
+    //        dbSetDocumentOwnership(_documentIds[i], _documentOwner);
+    //    }
 
-        for(uint i = 0; i < _documentIds.length; i++){
-            dbSetDocumentOwnership(_documentIds[i], _documentOwner);
-        }
+
+    //}
+
+    // set the document ownership. Only owners can update their documents
+    function setDocumentOwnewship(string memory _documentIds, address _documentOwner) public onlyOwner onlyNull{
+        require(_documentOwner != address(0) && (_documentOwner == creditor || _documentOwner == debtor), "Document owner not valid");
+        setOwnership(_documentIds, _documentOwner);
+        
 
 
     }
@@ -60,16 +71,16 @@ abstract contract CMMNCommitment is Commitment {
         
         uint currentTime = now;
         if(maxA == 0){
-            inAWin = currentTime > timeCreation + minA;
+            inAWin = currentTime >= timeCreation + minA;
             afterAWin = false;
         }
         if(maxC == 0){
             afterCWin = false;
             if(refC == RefCs.Detached){
-                inCWin = currentTime > timeDetach;
+                inCWin = currentTime >= timeDetach;
             }
             else {
-                inCWin = currentTime > timeCreation;
+                inCWin = currentTime >= timeCreation;
             }
         }
     }
@@ -79,19 +90,22 @@ abstract contract CMMNCommitment is Commitment {
     function start() public {
         onTargetStart();
     }
+    function terminate() public {
+        onTargetEnds();
+    }
 
     // creditor and debtor can call this method to create/upload their documents
-    function postDocument(bytes32 _documentId, uint _documentData) public {
-        require(dbGetDocumentOwnership(_documentId) == msg.sender, "Only the document owner can update _documentId status");
+    function postDocument(string memory _documentId, uint _documentData) public {
+        require(getOwnership(_documentId) == msg.sender, "Only the document owner can update _documentId status");
         // When conditional
         if(state == States.Conditional){
-            // is the document that triggers to detached
-            if(_documentId == dbGetStartDocumentName()){
-                dbStoreDocument(_documentId, _documentData, false);
+            // is the document that triggers to detached i.e. startDocument
+            if(keccak256(abi.encode(_documentId)) == keccak256(abi.encode("startDelivery"))){
+                storeDocument(_documentId, _documentData, false);
             }
             // any other document does not respect the control flow. Warning is logged
             else {
-                dbStoreDocument(_documentId, _documentData, true);
+                storeDocument(_documentId, _documentData, true);
                 logWarning();
             }
             onTick();
@@ -99,33 +113,28 @@ abstract contract CMMNCommitment is Commitment {
         // When detached
         else if(state == States.Detached){
             // if it's posted a document belonging to the conditional stage
-            if(_documentId == dbGetStartDocumentName()){
-                dbStoreDocument(_documentId, _documentData, true);
+            if(keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getStartDocumentName()))){
+                storeDocument(_documentId, _documentData, true);
                 logWarning();
                 onTick();
             }
             // if it's a document that triggers the end of the detached state
-            else if(_documentId == dbGetTerminateDocumentName()){
-                dbStoreDocument(_documentId, _documentData, false);
+            else if(keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getTerminateDocumentName()))){
+                storeDocument(_documentId, _documentData, false);
                 onTargetEnds();
             }
             // any other valid documents
             else {
-                dbStoreDocument(_documentId, _documentData, false);
+                storeDocument(_documentId, _documentData, false);
                 onTick();
             }
         }
-        // No document is expected in other stages
+        // No document is expected
         else {
-            dbStoreDocument(_documentId, _documentData, true);
+            storeDocument(_documentId, _documentData, true);
             logWarning();
             onTick();
         }
-         
-        
-
-        
-
 
     }
 
@@ -135,12 +144,16 @@ abstract contract CMMNCommitment is Commitment {
         }
     }
 
-    function dbGetTerminateDocumentName() internal view virtual returns(bytes32);
-    function dbGetStartDocumentName() internal view virtual returns(bytes32);
+    function getWarning() public view returns(ControlFlowStatus){
+        return warning;
+    }
 
-    function dbStoreDocument(bytes32 _documentId, uint _documentData, bool _warning) internal virtual;
-    function dbSetDocumentOwnership(bytes32 _documentId, address _documentOwner) internal virtual;
-    function dbGetDocumentOwnership(bytes32 _documentId)internal view virtual returns(address);
+    function getTerminateDocumentName() internal view virtual returns(string memory);
+    function getStartDocumentName() internal view virtual returns(string memory);
+
+    function storeDocument(string memory _documentId, uint _documentData, bool _warning) internal virtual;
+    function setOwnership(string memory _documentId, address _documentOwner) internal virtual;
+    function getOwnership(string memory _documentId) internal view virtual returns(address);
 
 
     

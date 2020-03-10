@@ -25,16 +25,16 @@ abstract contract Commitment {
 
 
     // transition variables
-    bool beforeAWin;
-    bool inAWin;
-    bool afterAWin;
-    bool beforeCWin;
-    bool inCWin;
-    bool afterCWin;
+    bool public beforeAWin;
+    bool public inAWin;
+    bool public afterAWin;
+    bool public beforeCWin;
+    bool public inCWin;
+    bool public afterCWin;
 
     // time variables
-    uint timeCreation;
-    uint timeDetach;
+    uint public timeCreation;
+    uint public timeDetach;
 
 
 
@@ -84,7 +84,7 @@ abstract contract Commitment {
     }
 
 
-    function updateTransitionVariables() internal {
+    function updateTransitionVariables() internal virtual{
         uint currentTime = now;
         if(state == States.Conditional){
             condA = evaluateAntecedent();
@@ -94,18 +94,18 @@ abstract contract Commitment {
         }
 
         beforeAWin = currentTime < timeCreation + minA;
-        inAWin = currentTime > timeCreation + minA && currentTime <= timeCreation + maxA;
-        afterAWin = currentTime >= timeCreation + maxA;
+        inAWin = currentTime >= timeCreation + minA && currentTime <= timeCreation + maxA;
+        afterAWin = currentTime > timeCreation + maxA;
 
         if(refC == RefCs.Creation){
             beforeCWin = currentTime < timeCreation + minC;
-            inCWin = currentTime > timeCreation + minC && currentTime <= timeCreation + maxC;
-            afterCWin = currentTime >= timeCreation + maxC;
+            inCWin = currentTime >= timeCreation + minC && currentTime <= timeCreation + maxC;
+            afterCWin = currentTime > timeCreation + maxC;
         }
         else {
             beforeCWin = currentTime < timeDetach + minC;
-            inCWin = currentTime > timeDetach + minC && currentTime <= timeDetach + maxC;
-            afterCWin = currentTime >= timeDetach + maxC;
+            inCWin = currentTime >= timeDetach + minC && currentTime <= timeDetach + maxC;
+            afterCWin = currentTime > timeDetach + maxC;
         }
 
     }
@@ -220,7 +220,5 @@ abstract contract Commitment {
         }
 
     }
-
-
 
 }
