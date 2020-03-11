@@ -25,15 +25,14 @@ contract("TemperatureCommitment", (accounts) => {
         
         return TemperatureCommitment.deployed().then((instance) => {
             cInstance = instance;
-            return cInstance.setDocumentOwnewship("startDelivery", debtorAddress, {from: accounts[0]});
+            return cInstance.setDocumentOwnership("startDelivery", debtorAddress, {from: accounts[0]});
         }).then(() => {
-            return cInstance.setDocumentOwnewship("temperature", debtorAddress, {from: accounts[0]});
+            return cInstance.setDocumentOwnership("temperature", debtorAddress, {from: accounts[0]});
         }).then(() => {
-            return cInstance.setDocumentOwnewship("endDelivery", debtorAddress, {from: accounts[0]});
+            return cInstance.setDocumentOwnership("endDelivery", debtorAddress, {from: accounts[0]});
         }).then(() => {
             return cInstance.getState({from: accounts[0]});
         }).then((state) => {
-            // 4 == Conditional
             assert.equal(state, 0, "Commitment remains in Null state");
         });
     });

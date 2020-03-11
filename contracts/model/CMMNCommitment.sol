@@ -54,7 +54,7 @@ abstract contract CMMNCommitment is Commitment {
     //}
 
     // set the document ownership. Only owners can update their documents
-    function setDocumentOwnewship(string memory _documentIds, address _documentOwner) public onlyOwner onlyNull{
+    function setDocumentOwnership(string memory _documentIds, address _documentOwner) public onlyOwner onlyNull{
         require(_documentOwner != address(0) && (_documentOwner == creditor || _documentOwner == debtor), "Document owner not valid");
         setOwnership(_documentIds, _documentOwner);
         
