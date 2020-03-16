@@ -7,34 +7,34 @@ abstract contract Commitment {
 
     // Commitment state machine
     enum States { Null, Expired, Terminated, Pending, Conditional, Detached, Satisfied, Violated}
-    States public state;
+    States private state;
     States private lastState;
 
     enum Types {Goal, Persistent}
     Types cType;
 
     // Commitment template
-    uint public minA;
-    uint public maxA;
-    uint public minC;
-    uint public maxC;
-    bool public condA;
-    bool public condC;
+    uint private minA;
+    uint private maxA;
+    uint private minC;
+    uint private maxC;
+    bool private condA;
+    bool private condC;
     enum RefCs { Creation, Detached}
-    RefCs public refC;
+    RefCs private refC;
 
 
     // transition variables
-    bool public beforeAWin;
-    bool public inAWin;
-    bool public afterAWin;
-    bool public beforeCWin;
-    bool public inCWin;
-    bool public afterCWin;
+    bool private beforeAWin;
+    bool private inAWin;
+    bool private afterAWin;
+    bool private beforeCWin;
+    bool private inCWin;
+    bool private afterCWin;
 
     // time variables
-    uint public timeCreation;
-    uint public timeDetach;
+    uint private timeCreation;
+    uint private timeDetach;
 
 
 
@@ -84,7 +84,7 @@ abstract contract Commitment {
     }
 
 
-    function updateTransitionVariables() internal virtual{
+    function updateTransitionVariables() private {
         uint currentTime = now;
         if(state == States.Conditional){
             condA = evaluateAntecedent();
@@ -106,6 +106,20 @@ abstract contract Commitment {
             beforeCWin = currentTime < timeDetach + minC;
             inCWin = currentTime >= timeDetach + minC && currentTime <= timeDetach + maxC;
             afterCWin = currentTime > timeDetach + maxC;
+        }
+
+        if(maxA == 0){
+            inAWin = currentTime >= timeCreation + minA;
+            afterAWin = false;
+        }
+        if(maxC == 0){
+            afterCWin = false;
+            if(refC == RefCs.Detached){
+                inCWin = currentTime >= timeDetach;
+            }
+            else if(refC == RefCs.Creation){
+                inCWin = currentTime >= timeCreation;
+            }
         }
 
     }
@@ -181,7 +195,7 @@ abstract contract Commitment {
     }
 
 
-    function onTick() internal {
+    function onTick() public {
         updateTransitionVariables();
         // from conditional state
         if(state == States.Conditional){

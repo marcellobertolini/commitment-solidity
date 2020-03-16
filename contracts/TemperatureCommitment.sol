@@ -1,10 +1,10 @@
 pragma solidity ^0.6.0;
-import "./model/CMMNCommitment.sol";
+import "./model/BlockchainCommitment.sol";
 import "./db/DB.sol";
-contract TemperatureCommitment is CMMNCommitment {
+contract TemperatureCommitment is BlockchainCommitment {
     uint private temperatureLimit;
     DB db;
-    constructor (uint _temperatureLimit) CMMNCommitment(Strenghts.Hard, Types.Persistent, 0, 0, 0, 0, RefCs.Detached) public {
+    constructor (uint _temperatureLimit) BlockchainCommitment(Strenghts.Hard, Types.Persistent, 0, 0, 0, 0, RefCs.Detached) public {
         temperatureLimit = _temperatureLimit;
         db = new DB();
 

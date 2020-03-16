@@ -54,17 +54,8 @@ contract("TemperatureCommitment", (accounts) => {
             return cInstance.getState({from: ownerAccount});
         }).then((state) => {
             assert.equal(4, state, "commitment is in Conditional state");
-            return cInstance.condA();
-        }).then((condA) => {
-            assert(!condA, "Antecedent false");
             return cInstance.postDocument("startDelivery", 0, {from: debtorAccount});
         }).then(() => {
-            return cInstance.condA();
-        }).then((condA) => {
-            assert(condA, "Antecedent becomes true");
-            return cInstance.inAWin();
-        }).then((inAWin) => {
-            assert(inAWin, "inAWin true");
             return cInstance.getState({from: ownerAccount});
         }).then((state) => {
             assert.equal(5, state, "commitment switches to detached");
@@ -79,15 +70,13 @@ contract("TemperatureCommitment", (accounts) => {
         }).then((state) => {
             assert.equal(5, state, "commitment is in detached state");
             return cInstance.postDocument("temperature", 3, {from: debtorAccount});
-
         }).then(() => {
-            return cInstance.condC();
-        }).then((condC) => {
-            assert(condC, "Conseguent is valid");
-            return cInstance.postDocument("endDelivery", 0, {from: debtorAccount});
-        }).then(() => {
+            return cInstance.terminate({from: ownerAccount});
+        })
+        .then(() => {
             return cInstance.getState({from : ownerAccount});
-        }).then((state) => {
+        })
+        .then((state) => {
             assert.equal(6, state, "commitment is marked satisfied");
         });
     })

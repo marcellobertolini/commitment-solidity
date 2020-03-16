@@ -2,7 +2,7 @@ pragma solidity ^0.6.0;
 import "./Commitment.sol";
 
 
-abstract contract CMMNCommitment is Commitment {
+abstract contract BlockchainCommitment is Commitment {
     // store actors accounts
     address public debtor;
     address public creditor;
@@ -22,7 +22,7 @@ abstract contract CMMNCommitment is Commitment {
         _;
     }
     modifier onlyNull {
-        if(state == States.Null){
+        if(getState() == States.Null){
             _;
         }
     }
@@ -62,29 +62,6 @@ abstract contract CMMNCommitment is Commitment {
 
     }
 
-    
-
-    // #### END INITIALIZATION ####
-
-    function updateTransitionVariables() internal override {
-        Commitment.updateTransitionVariables();
-        
-        uint currentTime = now;
-        if(maxA == 0){
-            inAWin = currentTime >= timeCreation + minA;
-            afterAWin = false;
-        }
-        if(maxC == 0){
-            afterCWin = false;
-            if(refC == RefCs.Detached){
-                inCWin = currentTime >= timeDetach;
-            }
-            else {
-                inCWin = currentTime >= timeCreation;
-            }
-        }
-    }
-
 
 
     function start() public {
@@ -98,7 +75,7 @@ abstract contract CMMNCommitment is Commitment {
     function postDocument(string memory _documentId, uint _documentData) public {
         require(getOwnership(_documentId) == msg.sender, "Only the document owner can update _documentId status");
         // When conditional
-        if(state == States.Conditional){
+        if(getState() == States.Conditional){
             // is the document that triggers to detached i.e. startDocument
             if(keccak256(abi.encode(_documentId)) == keccak256(abi.encode("startDelivery"))){
                 storeDocument(_documentId, _documentData, false);
@@ -111,7 +88,7 @@ abstract contract CMMNCommitment is Commitment {
             onTick();
         }
         // When detached
-        else if(state == States.Detached){
+        else if(getState() == States.Detached){
             // if it's posted a document belonging to the conditional stage
             if(keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getStartDocumentName()))){
                 storeDocument(_documentId, _documentData, true);

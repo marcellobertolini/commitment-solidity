@@ -57,19 +57,9 @@ contract("TemperatureCommitment", (accounts) => {
             return cInstance.getState({from: accounts[0]});
         }).then((state) => {
             assert.equal(state, 4, "commitment is conditional state");
-            return cInstance.condA();
-            
-        }).then((condA) => {
-            assert(!condA, "Antecedent false");
             return cInstance.postDocument("startDelivery", 0, {from: debtorAddress});
         })
         .then(() => {
-            return cInstance.condA();
-        }).then((condA) => {
-            assert(condA, "Antecedent true");
-            return cInstance.inAWin();
-        }).then((inAWin) => {
-            assert(inAWin, "inAWin true");
             return cInstance.getState({from: accounts[0]});
         }).then((state) => {
             assert.equal(state, 5, "commitment switches to Detached");
@@ -85,22 +75,14 @@ contract("TemperatureCommitment", (accounts) => {
             assert.equal(state, 5, "commitment is in detached state before sending temperature");
             return cInstance.postDocument("temperature", 3, {from: debtorAddress});
         }).then(() => {
-            return cInstance.condC();
-        }).then((condC) => {
-            assert(condC, "conseguent is valid after sending temperature");
             return cInstance.getState({from : accounts[0]});
         }).then((state) => {
             assert.equal(state, 5, "commitment is in detached state after sending temperature");
             return cInstance.postDocument("temperature", 10, {from: debtorAddress});
         }).then(() => {
-            return cInstance.condC();
-        }).then((condC) => {
-            assert(!condC, "conseguent is false after sending wrong temperature");
             return cInstance.getState({from: accounts[0]});
         }).then((state) => {
             assert.equal(state, 7, "commitment is marked violated");
         });
     });
-    
-
 });
