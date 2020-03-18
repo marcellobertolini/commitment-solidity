@@ -1,6 +1,6 @@
 var TemperatureCommitment  = artifacts.require("./TemperatureCommitment.sol");
 
-contract("TemperatureCommitment", (accounts) => {
+contract("TemperatureViolatedCommitment", (accounts) => {
     var cInstance;
     const creditorAddress = accounts[1];
     const debtorAddress = accounts[2];

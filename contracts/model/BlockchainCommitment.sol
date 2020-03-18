@@ -6,10 +6,10 @@ abstract contract BlockchainCommitment is Commitment {
     // store actors accounts
     address public debtor;
     address public creditor;
-    address public owner;
-
     enum ControlFlowStatus {OK, Warning}
     ControlFlowStatus private warning;
+
+    address private owner;
 
 
     constructor (Strenghts _strenght, Types _cType, uint _minA, uint _maxA, uint _minC, uint _maxC, RefCs _refC) Commitment(_strenght, _cType, _minA, _maxA, _minC, _maxC, _refC) public {
@@ -18,13 +18,15 @@ abstract contract BlockchainCommitment is Commitment {
     }
 
     modifier onlyOwner {
-        require(msg.sender == owner, "You cannot call this");
+        require(msg.sender == owner, "you cannot call this");
         _;
     }
+
+
     modifier onlyNull {
-        if(getState() == States.Null){
-            _;
-        }
+        require(getState() == States.Null, "you can call this only during initialization");
+        _;
+        
     }
 
     // #### BEGIN INITIALIZATION METHODS ####
@@ -77,7 +79,7 @@ abstract contract BlockchainCommitment is Commitment {
         // When conditional
         if(getState() == States.Conditional){
             // is the document that triggers to detached i.e. startDocument
-            if(keccak256(abi.encode(_documentId)) == keccak256(abi.encode("startDelivery"))){
+            if(keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getStartDocumentName()))){
                 storeDocument(_documentId, _documentData, false);
             }
             // any other document does not respect the control flow. Warning is logged

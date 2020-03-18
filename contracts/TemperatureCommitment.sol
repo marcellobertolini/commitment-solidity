@@ -11,11 +11,11 @@ contract TemperatureCommitment is BlockchainCommitment {
     }
 
 
-    function evaluateConseguent() internal override returns(bool) {
+    function condC() internal override returns(bool) {
         return db.isTemperatureValid(temperatureLimit);
     }
 
-    function evaluateAntecedent() internal override returns(bool) {
+    function condA() internal override returns(bool) {
         return db.exist("startDelivery", true);
     }
 

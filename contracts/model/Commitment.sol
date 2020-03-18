@@ -18,8 +18,6 @@ abstract contract Commitment {
     uint private maxA;
     uint private minC;
     uint private maxC;
-    bool private condA;
-    bool private condC;
     enum RefCs { Creation, Detached}
     RefCs private refC;
 
@@ -32,11 +30,12 @@ abstract contract Commitment {
     bool private inCWin;
     bool private afterCWin;
 
+    bool private condAHolds;
+    bool private condCHolds;
+
     // time variables
     uint private timeCreation;
     uint private timeDetach;
-
-
 
 
     constructor (Strenghts _strenght, Types _cType, uint _minA, uint _maxA, uint _minC, uint _maxC, RefCs _refC) public {
@@ -52,6 +51,8 @@ abstract contract Commitment {
         refC = _refC;
 
     }
+
+
 
     function toDetached() private {
         state = States.Detached;
@@ -86,12 +87,9 @@ abstract contract Commitment {
 
     function updateTransitionVariables() private {
         uint currentTime = now;
-        if(state == States.Conditional){
-            condA = evaluateAntecedent();
-        }
-        else if(state == States.Detached){
-            condC = evaluateConseguent();
-        }
+        condAHolds = condA();
+        condCHolds = condC();
+
 
         beforeAWin = currentTime < timeCreation + minA;
         inAWin = currentTime >= timeCreation + minA && currentTime <= timeCreation + maxA;
@@ -132,8 +130,8 @@ abstract contract Commitment {
     }
 
 
-    function evaluateConseguent() internal virtual returns(bool);
-    function evaluateAntecedent() internal virtual returns(bool);
+    function condC() internal virtual returns(bool);
+    function condA() internal virtual returns(bool);
 
 
     function onTargetStart() internal{
@@ -181,14 +179,22 @@ abstract contract Commitment {
         // from conditional
         if(state == States.Conditional){
             lastState = States.Conditional;
-            toTerminated();
+
+            if((cType == Types.Goal && inCWin && condCHolds) || cType == Types.Persistent){
+                toSatisfied();
+            }
+            else {
+                toTerminated();
+            }
+            
         }
-        if(state == States.Detached){
+        // from detached
+        else if(state == States.Detached){
             lastState = States.Detached;
             if(beforeCWin){
                 toViolated();
             }
-            else if((cType == Types.Goal && inCWin && condC) || cType == Types.Persistent){
+            else if((cType == Types.Goal && inCWin && condCHolds) || cType == Types.Persistent){
                 toSatisfied();
             }
         }
@@ -201,17 +207,25 @@ abstract contract Commitment {
         if(state == States.Conditional){
             lastState = States.Conditional;
             // stay in conditional
-            if(beforeAWin || (inAWin && !condA)){
+            if(beforeAWin || (inAWin && !condAHolds)){
                 toConditional();
             }
             // to expired state
-            else if(afterAWin){
+            if(afterAWin){
                 toExpired();
             }
             // to detach state
-            else if(inAWin && condA){
+            if(inAWin && condAHolds){
                 timeDetach = now;
                 toDetached();
+            }
+            // to violated state
+            if((cType == Types.Persistent && inCWin && !condCHolds) || (cType == Types.Goal && afterCWin)){
+                toViolated();
+            }
+            // to satisfied state
+            else if(cType == Types.Persistent && afterCWin){
+                toSatisfied();
             }
 
         }
@@ -220,7 +234,7 @@ abstract contract Commitment {
         else if(state == States.Detached){
             lastState == States.Detached;
             // Stay in detached
-            if(beforeCWin || (inCWin && ((cType == Types.Goal && !condC) || cType == Types.Persistent && condC))){
+            if(beforeCWin || (inCWin && ((cType == Types.Goal && !condCHolds) || cType == Types.Persistent && condCHolds))){
                toDetached();
             }
             // to satisfied state
@@ -228,7 +242,7 @@ abstract contract Commitment {
                 toSatisfied();
             }
             // to violated state
-            else if((cType == Types.Persistent && inCWin && !condC) || (cType == Types.Goal && afterCWin)){
+            else if((cType == Types.Persistent && inCWin && !condCHolds) || (cType == Types.Goal && afterCWin)){
                 toViolated();
             }
         }
