@@ -1,0 +1,15 @@
+{
+  "name": "commitment-solidity",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle.js",
+  "scripts": {
+    "test": "truffle test",
+    "dev" : "truffle development"
+  },
+  "author": "Marcello Bertolini",
+  "license": "ISC",
+  "dependencies": {
+    "truffle": "^5.1.18"
+  }
+}
