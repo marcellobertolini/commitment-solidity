@@ -37,26 +37,12 @@ contract("TemperatureViolatedCommitment", (accounts) => {
         });
     });
 
-    it("start the commitment", () => {
-        
-        return TemperatureCommitment.deployed().then((instance) => {
-            cInstance = instance;
-            return cInstance.start({from: accounts[0]});
-        }).then(() => {
-            return cInstance.getState({from: accounts[0]});
-        }).then((state) => {
-            assert.equal(state, 4, "Commitment switches to Conditional")
-        })
-    });
-
-    
-
     it("post initial document", () => {
         return TemperatureCommitment.deployed().then((instance) => {
             cInstance = instance;
             return cInstance.getState({from: accounts[0]});
         }).then((state) => {
-            assert.equal(state, 4, "commitment is conditional state");
+            assert.equal(state, 0, "commitment is Null state");
             return cInstance.postDocument("startDelivery", 0, {from: debtorAddress});
         })
         .then(() => {

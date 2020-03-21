@@ -39,11 +39,6 @@ contract("TemperatureSatisfiedCommitment", (accounts) => {
             return cInstance.getState({from: ownerAccount});
         }).then((state) => {
             assert.equal(0, state, "Commitment remains in null state");
-            return cInstance.start({from : ownerAccount});
-        }).then(()  => {
-            return cInstance.getState({from : ownerAccount});
-        }).then((state) => {
-            assert.equal(4, state, "Commitment switches to Conditional");
             
         });
     });
@@ -53,12 +48,12 @@ contract("TemperatureSatisfiedCommitment", (accounts) => {
             cInstance = instance;
             return cInstance.getState({from: ownerAccount});
         }).then((state) => {
-            assert.equal(4, state, "commitment is in Conditional state");
+            assert.equal(0, state, "commitment is in Null state");
             return cInstance.postDocument("startDelivery", 0, {from: debtorAccount});
         }).then(() => {
             return cInstance.getState({from: ownerAccount});
         }).then((state) => {
-            assert.equal(5, state, "commitment switches to detached");
+            assert.equal(5, state, "commitment switches to Detached");
         });
     });
 
@@ -71,12 +66,10 @@ contract("TemperatureSatisfiedCommitment", (accounts) => {
             assert.equal(5, state, "commitment is in detached state");
             return cInstance.postDocument("temperature", 3, {from: debtorAccount});
         }).then(() => {
-            return cInstance.terminate({from: ownerAccount});
-        })
-        .then(() => {
+            return cInstance.postDocument("endDelivery", 0, {from: debtorAccount});
+        }).then(() => {
             return cInstance.getState({from : ownerAccount});
-        })
-        .then((state) => {
+        }).then((state) => {
             assert.equal(6, state, "commitment is marked satisfied");
         });
     })
