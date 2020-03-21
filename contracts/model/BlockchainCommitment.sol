@@ -11,6 +11,9 @@ abstract contract BlockchainCommitment is Commitment {
 
     address private owner;
 
+    bool private inCommitmentWin;
+    bool private afterCommitmentWin;
+
 
     constructor (Strenghts _strenght, Types _cType, uint _minA, uint _maxA, uint _minC, uint _maxC, RefCs _refC) Commitment(_strenght, _cType, _minA, _maxA, _minC, _maxC, _refC) public {
         warning = ControlFlowStatus.OK;
@@ -74,46 +77,39 @@ abstract contract BlockchainCommitment is Commitment {
     }
 
     // creditor and debtor can call this method to create/upload their documents
-    function postDocument(string memory _documentId, uint _documentData) public {
-        require(getOwnership(_documentId) == msg.sender, "Only the document owner can update _documentId status");
-        // When conditional
-        if(getState() == States.Conditional){
-            // is the document that triggers to detached i.e. startDocument
-            if(keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getStartDocumentName()))){
-                storeDocument(_documentId, _documentData, false);
-            }
-            // any other document does not respect the control flow. Warning is logged
-            else {
-                storeDocument(_documentId, _documentData, true);
-                logWarning();
-            }
-            onTick();
+    function postDocument (string memory _documentId, uint _documentData) public {
+        if(getState() == States.Null && keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getStartDocumentName())) && !inCommitmentWin){
+            inCommitmentWin=true;
+            storeDocument(_documentId, _documentData, false);
+            onTargetStart();
         }
-        // When detached
-        else if(getState() == States.Detached){
-            // if it's posted a document belonging to the conditional stage
-            if(keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getStartDocumentName()))){
-                storeDocument(_documentId, _documentData, true);
-                logWarning();
-                onTick();
-            }
-            // if it's a document that triggers the end of the detached state
-            else if(keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getTerminateDocumentName()))){
+        else if(getState() == States.Conditional || getState() == States.Detached){
+
+            if(keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getTerminateDocumentName())) && !afterCommitmentWin){
+                afterCommitmentWin=true;
                 storeDocument(_documentId, _documentData, false);
                 onTargetEnds();
             }
-            // any other valid documents
-            else {
+            else if(keccak256(abi.encode(_documentId)) != keccak256(abi.encode(getStartDocumentName())) && keccak256(abi.encode(_documentId)) != keccak256(abi.encode(getTerminateDocumentName()))){
                 storeDocument(_documentId, _documentData, false);
-                onTick();
+
+            }
+            
+            else{
+                storeDocument(_documentId, _documentData, true);
+                logWarning();
+
             }
         }
-        // No document is expected
-        else {
+        else if(getState() == States.Violated && keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getTerminateDocumentName())) && !afterCommitmentWin){
+            storeDocument(_documentId, _documentData, false);
+            onTargetEnds();
+        }
+        else{
             storeDocument(_documentId, _documentData, true);
             logWarning();
-            onTick();
         }
+        onTick();
 
     }
 
