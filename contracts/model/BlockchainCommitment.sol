@@ -72,7 +72,7 @@ abstract contract BlockchainCommitment is Commitment {
         if(getState() == States.Null && documentTypes[_documentId] == DocumentType.START && !inCommitmentWin){
             inCommitmentWin=true;
             onDocumentPosted(_documentId, _documentData, false);
-            onTargetStart();
+            onTargetStarts();
         }
         else if(getState() == States.Conditional || getState() == States.Detached){
 

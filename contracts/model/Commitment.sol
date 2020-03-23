@@ -134,7 +134,7 @@ abstract contract Commitment {
     function condA() internal virtual returns(bool);
 
 
-    function onTargetStart() internal{
+    function onTargetStarts() internal{
         if(state == States.Null){
             lastState = States.Null;
             timeCreation = now;
