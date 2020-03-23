@@ -5,7 +5,7 @@
   "main": "truffle.js",
   "scripts": {
     "test": "truffle test",
-    "dev" : "truffle development"
+    "dev": "truffle development"
   },
   "author": "Marcello Bertolini",
   "license": "ISC",
