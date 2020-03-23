@@ -34,7 +34,7 @@ abstract contract BlockchainCommitment is Commitment {
 
 
     modifier onlyNull {
-        require(getState() == States.Null, "you can call this only during initialization");
+        require(super.getState() == States.Null, "you can call this only during initialization");
         _;
         
     }
@@ -44,9 +44,12 @@ abstract contract BlockchainCommitment is Commitment {
         _;
     }
 
-    // #### BEGIN INITIALIZATION METHODS ####
 
-    // set the creditor and the debtor of the commitment
+
+    /*
+        This method must be called when the smart contract is instantiated.
+        Sets the addresses of the two actors of the commitment
+    */
     function setActors(address _creditor, address _debtor) public onlyOwner onlyNull{
 
         //require(creditor == address(0), "Creditor can be set only once");
@@ -58,7 +61,12 @@ abstract contract BlockchainCommitment is Commitment {
         debtor = _debtor;
     }
 
-    // set the document ownership. Only owners can update their documents
+    /*
+        creates a new document and sets its type.
+        `_documentId`
+        `_documentOwner` the owner of the document. Only actor that can upload the document in the future
+        `_documentType` can be "start", "scope", "end"
+    */
     function initDocument(string memory _documentId, address _documentOwner, string memory _documentType) public onlyOwner onlyNull onlyParticipants(_documentOwner) {
         require(checkDocumentType(_documentType), "Document type not valid");
         documentOwners[_documentId] = _documentOwner;
@@ -66,20 +74,25 @@ abstract contract BlockchainCommitment is Commitment {
         onInitDocument(_documentId, _documentOwner);
     }
 
-    // creditor and debtor can call this method to create/upload their documents
+    /* 
+        The creditor and the debtor can call this method to create/upload their documents.
+        This methods handles the commitment control flow with respect to the document type received.
+        `_documentId` the document to post
+        `_documentData` the document payload
+    */ 
     function postDocument (string memory _documentId, uint _documentData) public {
         require(msg.sender == documentOwners[_documentId], "Document owner not valid");
-        if(getState() == States.Null && documentTypes[_documentId] == DocumentType.START && !inCommitmentWin){
+        if(super.getState() == States.Null && documentTypes[_documentId] == DocumentType.START && !inCommitmentWin){
             inCommitmentWin=true;
             onDocumentPosted(_documentId, _documentData, false);
-            onTargetStarts();
+            super.onTargetStarts();
         }
-        else if(getState() == States.Conditional || getState() == States.Detached){
+        else if(super.getState() == States.Conditional || super.getState() == States.Detached){
 
             if(documentTypes[_documentId] == DocumentType.END && !afterCommitmentWin){
                 afterCommitmentWin=true;
                 onDocumentPosted(_documentId, _documentData, false);
-                onTargetEnds();
+                super.onTargetEnds();
             }
             else if(documentTypes[_documentId] == DocumentType.SCOPE){
                 onDocumentPosted(_documentId, _documentData, false);
@@ -92,24 +105,29 @@ abstract contract BlockchainCommitment is Commitment {
 
             }
         }
-        else if(getState() == States.Violated && documentTypes[_documentId] == DocumentType.END && !afterCommitmentWin){
+        else if(super.getState() == States.Violated && documentTypes[_documentId] == DocumentType.END && !afterCommitmentWin){
             onDocumentPosted(_documentId, _documentData, false);
-            onTargetEnds();
+            super.onTargetEnds();
         }
         else{
             onDocumentPosted(_documentId, _documentData, true);
             logWarning();
         }
-        onTick();
+        super.onTick();
 
     }
-
+    /*
+        This method is called whenever a document is received out of the
+        commitment scope.
+    */
     function logWarning() private {
         if(warning == ControlFlowStatus.OK){
             warning = ControlFlowStatus.Warning;
         }
     }
-
+    /*
+        returns {ControlflowStatus.Warning} if an error in the control flow was detected.
+    */
     function getWarning() public view returns(ControlFlowStatus){
         return warning;
     }
@@ -148,7 +166,19 @@ abstract contract BlockchainCommitment is Commitment {
         }
     }
 
+    /*
+        This method is called when the owner of the smart cotract creates a document on the smart contract.
+        `_documentId` is the document identifier
+        '_documentOwner' is the address that has the right to upload the relative document in the future.
+    */
     function onInitDocument(string memory _documentId, address _documentOwner) internal virtual;
+
+    /*
+        This method is called when an actor uploads the document identified by
+        `_documentId`. 
+        `_documentData` is the document payload.
+        `_warning` is set to true if the document is received out of the commitment scope
+    */
     function onDocumentPosted(string memory _documentId, uint _documentData, bool _warning) internal virtual;
     
 }
