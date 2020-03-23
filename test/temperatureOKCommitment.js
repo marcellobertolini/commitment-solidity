@@ -30,11 +30,11 @@ contract("TemperatureSatisfiedCommitment", (accounts) => {
     it("set documents and start commitment" , () => {
         return TemperatureCommitment.deployed().then((instance) => {
             cInstance = instance;
-            return cInstance.setDocument("startDelivery", debtorAccount, {from: ownerAccount});
+            return cInstance.initDocument("startDelivery", debtorAccount, "start",{from: ownerAccount});
         }).then(() => {
-            return cInstance.setDocument("temperature", debtorAccount, {from: ownerAccount});
+            return cInstance.initDocument("temperature", debtorAccount, "scope", {from: ownerAccount});
         }).then(() => {
-            return cInstance.setDocument("endDelivery", debtorAccount, {from: ownerAccount});
+            return cInstance.initDocument("endDelivery", debtorAccount, "end", {from: ownerAccount});
         }).then(() => {
             return cInstance.getState({from: ownerAccount});
         }).then((state) => {
