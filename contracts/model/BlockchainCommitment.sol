@@ -59,9 +59,9 @@ abstract contract BlockchainCommitment is Commitment {
     //}
 
     // set the document ownership. Only owners can update their documents
-    function setDocumentOwnership(string memory _documentIds, address _documentOwner) public onlyOwner onlyNull{
+    function setDocument(string memory _documentIds, address _documentOwner) public onlyOwner onlyNull{
         require(_documentOwner != address(0) && (_documentOwner == creditor || _documentOwner == debtor), "Document owner not valid");
-        setOwnership(_documentIds, _documentOwner);
+        initDocument(_documentIds, _documentOwner);
         
 
 
@@ -78,35 +78,36 @@ abstract contract BlockchainCommitment is Commitment {
 
     // creditor and debtor can call this method to create/upload their documents
     function postDocument (string memory _documentId, uint _documentData) public {
-        if(getState() == States.Null && keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getStartDocumentName())) && !inCommitmentWin){
+        require(msg.sender == getDocumentOwner(_documentId), "Document owner not valid");
+        if(getState() == States.Null && keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getOnTargetStartsDocument())) && !inCommitmentWin){
             inCommitmentWin=true;
-            storeDocument(_documentId, _documentData, false);
+            logDocument(_documentId, _documentData, false);
             onTargetStart();
         }
         else if(getState() == States.Conditional || getState() == States.Detached){
 
-            if(keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getTerminateDocumentName())) && !afterCommitmentWin){
+            if(keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getOnTargetEndsDocument())) && !afterCommitmentWin){
                 afterCommitmentWin=true;
-                storeDocument(_documentId, _documentData, false);
+                logDocument(_documentId, _documentData, false);
                 onTargetEnds();
             }
-            else if(keccak256(abi.encode(_documentId)) != keccak256(abi.encode(getStartDocumentName())) && keccak256(abi.encode(_documentId)) != keccak256(abi.encode(getTerminateDocumentName()))){
-                storeDocument(_documentId, _documentData, false);
+            else if(keccak256(abi.encode(_documentId)) != keccak256(abi.encode(getOnTargetStartsDocument())) && keccak256(abi.encode(_documentId)) != keccak256(abi.encode(getOnTargetEndsDocument()))){
+                logDocument(_documentId, _documentData, false);
 
             }
             
             else{
-                storeDocument(_documentId, _documentData, true);
+                logDocument(_documentId, _documentData, true);
                 logWarning();
 
             }
         }
-        else if(getState() == States.Violated && keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getTerminateDocumentName())) && !afterCommitmentWin){
-            storeDocument(_documentId, _documentData, false);
+        else if(getState() == States.Violated && keccak256(abi.encode(_documentId)) == keccak256(abi.encode(getOnTargetEndsDocument())) && !afterCommitmentWin){
+            logDocument(_documentId, _documentData, false);
             onTargetEnds();
         }
         else{
-            storeDocument(_documentId, _documentData, true);
+            logDocument(_documentId, _documentData, true);
             logWarning();
         }
         onTick();
@@ -123,12 +124,12 @@ abstract contract BlockchainCommitment is Commitment {
         return warning;
     }
 
-    function getTerminateDocumentName() internal view virtual returns(string memory);
-    function getStartDocumentName() internal view virtual returns(string memory);
+    function getOnTargetEndsDocument() internal view virtual returns(string memory);
+    function getOnTargetStartsDocument() internal view virtual returns(string memory);
 
-    function storeDocument(string memory _documentId, uint _documentData, bool _warning) internal virtual;
-    function setOwnership(string memory _documentId, address _documentOwner) internal virtual;
-    function getOwnership(string memory _documentId) internal view virtual returns(address);
+    function logDocument(string memory _documentId, uint _documentData, bool _warning) internal virtual;
+    function initDocument(string memory _documentId, address _documentOwner) internal virtual;
+    function getDocumentOwner(string memory _documentId) internal view virtual returns(address);
 
 
     

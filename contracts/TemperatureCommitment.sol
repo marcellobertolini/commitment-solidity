@@ -19,21 +19,21 @@ contract TemperatureCommitment is BlockchainCommitment {
         return db.exist("startDelivery", true);
     }
 
-    function storeDocument(string memory _documentId, uint _documentData, bool _warning) internal override {
+    function logDocument(string memory _documentId, uint _documentData, bool _warning) internal override {
         db.store(_documentId, _documentData, _warning);
     }
-    function setOwnership(string memory _documentId, address _documentOwner) internal override{
-        db.setDocumentOwnership(_documentId, _documentOwner);
+    function initDocument(string memory _documentId, address _documentOwner) internal override{
+        db.initDocument(_documentId, _documentOwner);
     }
-    function getOwnership(string memory _documentId) internal view override returns(address) {
-        return db.getDocumentOwnership(_documentId);
+    function getDocumentOwner(string memory _documentId) internal view override returns(address) {
+        return db.getDocumentOwner(_documentId);
     }
 
-    function getTerminateDocumentName() internal view override returns(string memory){
+    function getOnTargetEndsDocument() internal view override returns(string memory){
         return "endDelivery";
     }
 
-    function getStartDocumentName() internal view override returns(string memory){
+    function getOnTargetStartsDocument() internal view override returns(string memory){
         return "startDelivery";
     }
 

@@ -25,11 +25,11 @@ contract("TemperatureViolatedCommitment", (accounts) => {
         
         return TemperatureCommitment.deployed().then((instance) => {
             cInstance = instance;
-            return cInstance.setDocumentOwnership("startDelivery", debtorAddress, {from: accounts[0]});
+            return cInstance.setDocument("startDelivery", debtorAddress, {from: accounts[0]});
         }).then(() => {
-            return cInstance.setDocumentOwnership("temperature", debtorAddress, {from: accounts[0]});
+            return cInstance.setDocument("temperature", debtorAddress, {from: accounts[0]});
         }).then(() => {
-            return cInstance.setDocumentOwnership("endDelivery", debtorAddress, {from: accounts[0]});
+            return cInstance.setDocument("endDelivery", debtorAddress, {from: accounts[0]});
         }).then(() => {
             return cInstance.getState({from: accounts[0]});
         }).then((state) => {
