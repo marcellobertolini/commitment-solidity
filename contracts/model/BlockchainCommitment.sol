@@ -80,41 +80,50 @@ abstract contract BlockchainCommitment is Commitment {
         `_documentId` the document to post
         `_documentData` the document payload
     */ 
-    function postDocument (string memory _documentId, uint _documentData) public {
+    function postDocument(string memory _documentId, uint _documentData) public {
         require(msg.sender == documentOwners[_documentId], "Document owner not valid");
+        bool w;
+        bool s;
+        bool e;
+
         if(super.getState() == States.Null && documentTypes[_documentId] == DocumentType.START && !inCommitmentWin){
-            inCommitmentWin=true;
-            onDocumentPosted(_documentId, _documentData, false);
-            super.onTargetStarts();
+            s=true;
         }
         else if(super.getState() == States.Conditional || super.getState() == States.Detached){
-
             if(documentTypes[_documentId] == DocumentType.END && !afterCommitmentWin){
-                afterCommitmentWin=true;
-                onDocumentPosted(_documentId, _documentData, false);
-                super.onTargetEnds();
+                e = true;
             }
             else if(documentTypes[_documentId] == DocumentType.SCOPE){
-                onDocumentPosted(_documentId, _documentData, false);
-
+                w = false;
             }
-            
             else{
-                onDocumentPosted(_documentId, _documentData, true);
-                logWarning();
-
+                w = true;
             }
+
         }
-        else if(super.getState() == States.Violated && documentTypes[_documentId] == DocumentType.END && !afterCommitmentWin){
-            onDocumentPosted(_documentId, _documentData, false);
-            super.onTargetEnds();
+        else if((super.getState() == States.Violated || super.getState() == States.Satisfied) && documentTypes[_documentId] == DocumentType.END && !afterCommitmentWin){
+            e = true;
         }
         else{
-            onDocumentPosted(_documentId, _documentData, true);
+            w = true;
+        }
+
+        if(w){
             logWarning();
         }
-        super.onTick();
+        onDocumentPosted(_documentId, _documentData, w);
 
+        if(s){
+            inCommitmentWin=true;
+            super.onTargetStarts();
+        }
+        else if(e){
+            inCommitmentWin=false;
+            afterCommitmentWin=true;
+            super.onTargetEnds();
+        }
+        super.onTick();
+        
     }
     /*
         This method is called whenever a document is received out of the
@@ -126,10 +135,10 @@ abstract contract BlockchainCommitment is Commitment {
         }
     }
     /*
-        returns {ControlflowStatus.Warning} if an error in the control flow was detected.
+        returns true if an error in the control flow was detected.
     */
-    function getWarning() public view returns(ControlFlowStatus){
-        return warning;
+    function getWarning() public view returns(bool){
+        return warning == ControlFlowStatus.Warning;
     }
 
     function getDocumentType(string memory _documentType) private pure returns(DocumentType){
@@ -164,6 +173,13 @@ abstract contract BlockchainCommitment is Commitment {
         else {
             return false;
         }
+    }
+
+    function isStarted() public view returns(bool){
+        return inCommitmentWin;
+    }
+    function isTerminated() public view returns(bool){
+        return afterCommitmentWin;
     }
 
     /*

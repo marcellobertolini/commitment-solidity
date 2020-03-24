@@ -72,4 +72,13 @@ contract("TemperatureViolatedCommitment", (accounts) => {
             assert.equal(state, 7, "commitment is marked violated");
         });
     });
+
+    it("warning ok", () => {
+        return TemperatureCommitment.deployed().then((instance) => {
+            cInstance = instance;
+            return cInstance.getWarning({from : ownerAccount});
+        }).then((_warning) => {
+            assert(!_warning, "warning ok");
+        });
+    });
 });

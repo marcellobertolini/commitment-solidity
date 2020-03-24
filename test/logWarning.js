@@ -1,6 +1,6 @@
 const TemperatureCommitment  = artifacts.require("./TemperatureCommitment.sol");
 
-contract("TemperatureSatisfiedCommitment", (accounts) => {
+contract("logWarning", (accounts) => {
     const ownerAccount = accounts[0];
     const creditorAccount = accounts[1];
     const debtorAccount = accounts[2];
@@ -60,16 +60,27 @@ contract("TemperatureSatisfiedCommitment", (accounts) => {
     });
 
 
-    it("post temperature", () => {
+    it("post again startDelivery", () => {
         return TemperatureCommitment.deployed().then((instance) => {
             cInstance = instance;
-            return cInstance.postDocument("temperature", 3, {from: debtorAccount});
+            return cInstance.postDocument("startDelivery", 0, {from: debtorAccount});
         }).then(() => {
             return cInstance.getState({from : ownerAccount});
         }).then((state) => {
             assert.equal(5, state, "commitment is in detached state");
         });
     });
+
+    it("log warning", () => {
+        return TemperatureCommitment.deployed().then((instance) => {
+            cInstance = instance;
+            return cInstance.getWarning({from : ownerAccount});
+        }).then((_warning) => {
+            assert(_warning, "warning logged");
+        });
+    });
+
+
 
     it("post endDelivery", () => {
         return TemperatureCommitment.deployed().then((instance) => {
@@ -82,15 +93,6 @@ contract("TemperatureSatisfiedCommitment", (accounts) => {
         });
     });
 
-    it("warning ok", () => {
-        return TemperatureCommitment.deployed().then((instance) => {
-            cInstance = instance;
-            return cInstance.getWarning({from : ownerAccount});
-        }).then((_warning) => {
-            assert(!_warning, "warning ok");
-        });
-    });
-
     it("commitment terminated", () => {
         return TemperatureCommitment.deployed().then((instance) => {
             cInstance = instance;
@@ -99,6 +101,4 @@ contract("TemperatureSatisfiedCommitment", (accounts) => {
             assert(_isTerminated, "commitment is terminated");
         });
     });
-
-    
 });
