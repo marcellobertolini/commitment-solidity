@@ -82,46 +82,28 @@ abstract contract BlockchainCommitment is Commitment {
     */ 
     function postDocument(string memory _documentId, uint _documentData) public {
         require(msg.sender == documentOwners[_documentId], "Document owner not valid");
-        bool w;
-        bool s;
-        bool e;
-
-        if(super.getState() == States.Null && documentTypes[_documentId] == DocumentType.START && !inCommitmentWin){
-            s=true;
-        }
-        else if(super.getState() == States.Conditional || super.getState() == States.Detached){
-            if(documentTypes[_documentId] == DocumentType.END && !afterCommitmentWin){
-                e = true;
-            }
-            else if(documentTypes[_documentId] == DocumentType.SCOPE){
-                w = false;
-            }
-            else{
-                w = true;
-            }
+        if(!inCommitmentWin && documentTypes[_documentId] == DocumentType.START){
+            inCommitmentWin = true;
+            onDocumentPosted(_documentId, _documentData, false);
+            onTargetStarts();
 
         }
-        else if((super.getState() == States.Violated || super.getState() == States.Satisfied) && documentTypes[_documentId] == DocumentType.END && !afterCommitmentWin){
-            e = true;
-        }
-        else{
-            w = true;
-        }
+        else if(inCommitmentWin && documentTypes[_documentId] == DocumentType.END){
+            inCommitmentWin = false;
+            afterCommitmentWin = true;
+            onDocumentPosted(_documentId, _documentData, false);
+            onTargetEnds();
 
-        if(w){
+        }
+        else if(inCommitmentWin && documentTypes[_documentId] == DocumentType.SCOPE){
+            onDocumentPosted(_documentId, _documentData, false);
+        }
+        else {
+            onDocumentPosted(_documentId, _documentData, true);
             logWarning();
         }
-        onDocumentPosted(_documentId, _documentData, w);
+        
 
-        if(s){
-            inCommitmentWin=true;
-            super.onTargetStarts();
-        }
-        else if(e){
-            inCommitmentWin=false;
-            afterCommitmentWin=true;
-            super.onTargetEnds();
-        }
         super.onTick();
         
     }
