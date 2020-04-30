@@ -11,6 +11,8 @@ contract("TemperatureViolatedCommitment", (accounts) => {
             return cInstance.getState({from: accounts[0]});
         }).then((state) => {
             assert.equal(state, 0, "Commitment in Null state");
+            
+            // Setting participant creditor and debtor
             return cInstance.setActors(creditorAccount, debtorAccount, {from: accounts[0]});
         }).then(() => {
             return cInstance.creditor();
@@ -19,18 +21,23 @@ contract("TemperatureViolatedCommitment", (accounts) => {
             return cInstance.debtor();
         }).then((_debtorAccount) => {
             assert.equal(_debtorAccount, debtorAccount, "Contains the correct debtor");
+            return cInstance.signCommitment({ from : debtorAccount});
+        }).then(() => {
+            return cInstance.signCommitment({from : creditorAccount});
+            
         });
     });
 
+    // Initialization of the documents
     it("set documents", () => {
         
         return TemperatureCommitment.deployed().then((instance) => {
             cInstance = instance;
-            return cInstance.initDocument("startDelivery", debtorAccount, "start",{from: ownerAccount});
+            return cInstance.initDocument("startDelivery", debtorAccount, "InitScope",{from: ownerAccount});
         }).then(() => {
-            return cInstance.initDocument("temperature", debtorAccount, "scope", {from: ownerAccount});
+            return cInstance.initDocument("temperature", debtorAccount, "Scope", {from: ownerAccount});
         }).then(() => {
-            return cInstance.initDocument("endDelivery", debtorAccount, "end", {from: ownerAccount});
+            return cInstance.initDocument("endDelivery", debtorAccount, "TerminateScope", {from: ownerAccount});
         }).then(() => {
             return cInstance.getState({from: ownerAccount});
         }).then((state) => {
@@ -38,6 +45,7 @@ contract("TemperatureViolatedCommitment", (accounts) => {
         });
     });
 
+    // Post InitScope document
     it("post initial document", () => {
         return TemperatureCommitment.deployed().then((instance) => {
             cInstance = instance;
@@ -53,22 +61,27 @@ contract("TemperatureViolatedCommitment", (accounts) => {
         });
     });
 
-
+    // Post Scope document
     it("post temperature", () => {
         return TemperatureCommitment.deployed().then((instance) => {
             cInstance = instance;
             return cInstance.getState({from : ownerAccount});
         }).then((state) => {
             assert.equal(state, 5, "commitment is in detached state before sending temperature");
+
+            // Post temperature
             return cInstance.postDocument("temperature", 3, {from: debtorAccount});
         }).then(() => {
             return cInstance.getState({from : ownerAccount});
         }).then((state) => {
             assert.equal(state, 5, "commitment is in detached state after sending temperature");
+            
+            // Post HIGH temperature
             return cInstance.postDocument("temperature", 10, {from: debtorAccount});
         }).then(() => {
             return cInstance.getState({from: ownerAccount});
         }).then((state) => {
+            
             assert.equal(state, 7, "commitment is marked violated");
         });
     });

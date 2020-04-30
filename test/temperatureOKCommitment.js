@@ -22,7 +22,9 @@ contract("TemperatureSatisfiedCommitment", (accounts) => {
             return cInstance.debtor();
         }).then((_debtorAccount) => {
             assert.equal(debtorAccount, _debtorAccount, "debtor account set correctly");
-
+            return cInstance.signCommitment({ from : debtorAccount});
+        }).then(() => {
+            return cInstance.signCommitment({from : creditorAccount});
         });
     
     });
@@ -30,11 +32,11 @@ contract("TemperatureSatisfiedCommitment", (accounts) => {
     it("set documents and start commitment" , () => {
         return TemperatureCommitment.deployed().then((instance) => {
             cInstance = instance;
-            return cInstance.initDocument("startDelivery", debtorAccount, "start",{from: ownerAccount});
+            return cInstance.initDocument("startDelivery", debtorAccount, "InitScope",{from: ownerAccount});
         }).then(() => {
-            return cInstance.initDocument("temperature", debtorAccount, "scope", {from: ownerAccount});
+            return cInstance.initDocument("temperature", debtorAccount, "Scope", {from: ownerAccount});
         }).then(() => {
-            return cInstance.initDocument("endDelivery", debtorAccount, "end", {from: ownerAccount});
+            return cInstance.initDocument("endDelivery", debtorAccount, "TerminateScope", {from: ownerAccount});
         }).then(() => {
             return cInstance.getState({from: ownerAccount});
         }).then((state) => {
