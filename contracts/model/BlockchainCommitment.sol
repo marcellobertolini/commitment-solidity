@@ -100,7 +100,7 @@ abstract contract BlockchainCommitment is Commitment {
     */ 
     function postDocument(string memory _documentId, uint _documentData) public commitmentSigned {
         require(msg.sender == documentOwners[_documentId], "Document owner not valid");
-        if(!inCommitmentWin && documentCategories[_documentId] == DocumentCategory.INIT_SCOPE){
+        if(!inCommitmentWin && documentCategories[_documentId] == DocumentCategory.INIT_SCOPE && !afterCommitmentWin){
             inCommitmentWin = true;
             onDocumentPosted(_documentId, _documentData, false);
             onTargetStarts();
