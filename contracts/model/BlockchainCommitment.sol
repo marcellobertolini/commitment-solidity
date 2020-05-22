@@ -1,8 +1,8 @@
-pragma solidity ^0.6.0;
+pragma solidity ^0.5.0;
 import "./Commitment.sol";
 
 
-abstract contract BlockchainCommitment is Commitment {
+contract BlockchainCommitment is Commitment {
     // store actors accounts
     address public debtor;
     address public creditor;
@@ -26,7 +26,8 @@ abstract contract BlockchainCommitment is Commitment {
     bool private afterCommitmentWin;
 
 
-    constructor (Strenghts _strenght, Types _cType, uint _minA, uint _maxA, uint _minC, uint _maxC, RefCs _refC) Commitment(_strenght, _cType, _minA, _maxA, _minC, _maxC, _refC) public {
+    constructor (Strenghts _strenght, Types _cType, uint _minA, uint _maxA, uint _minC, uint _maxC, RefCs _refC)
+    Commitment(_strenght, _cType, _minA, _maxA, _minC, _maxC, _refC) public {
         warning = ControlFlowStatus.OK;
         owner = msg.sender;
     }
@@ -40,7 +41,7 @@ abstract contract BlockchainCommitment is Commitment {
     modifier onlyNull {
         require(super.getState() == States.Null, "you can call this only during initialization");
         _;
-        
+
     }
 
     modifier onlyParticipants (address _participant){
@@ -76,7 +77,8 @@ abstract contract BlockchainCommitment is Commitment {
         `_documentOwner` the owner of the document. Only actor that can upload the document in the future
         `_documentCategory` can be "InitScope", "Scope", "TerminateScope"
     */
-    function initDocument(string memory _documentId, address _documentOwner, string memory _documentCategory) public onlyOwner onlyNull onlyParticipants(_documentOwner) {
+    function initDocument(string memory _documentId, address _documentOwner, string memory _documentCategory)
+    public onlyOwner onlyNull onlyParticipants(_documentOwner) {
         require(checkDocumentCategory(_documentCategory), "Document category not valid");
         documentOwners[_documentId] = _documentOwner;
         documentCategories[_documentId] = getDocumentCategory(_documentCategory);
@@ -91,13 +93,12 @@ abstract contract BlockchainCommitment is Commitment {
             debtorApproved = true;
         }
     }
-
-    /* 
+    /*
         The creditor and the debtor can call this method to create/upload their documents.
         This methods handles the commitment control flow with respect to the document type received.
         `_documentId` the document to post
         `_documentData` the document payload
-    */ 
+    */
     function postDocument(string memory _documentId, uint _documentData) public commitmentSigned {
         require(msg.sender == documentOwners[_documentId], "Document owner not valid");
         if(!inCommitmentWin && documentCategories[_documentId] == DocumentCategory.INIT_SCOPE && !afterCommitmentWin){
@@ -120,10 +121,10 @@ abstract contract BlockchainCommitment is Commitment {
             onDocumentPosted(_documentId, _documentData, true);
             logWarning();
         }
-        
+
 
         super.onTick();
-        
+
     }
     /*
         This method is called whenever a document is received out of the
@@ -187,14 +188,13 @@ abstract contract BlockchainCommitment is Commitment {
         `_documentId` is the document identifier
         '_documentOwner' is the address that has the right to upload the relative document in the future.
     */
-    function onInitDocument(string memory _documentId, address _documentOwner) internal virtual;
+    function onInitDocument(string memory _documentId, address _documentOwner) internal;
 
     /*
         This method is called when an actor uploads the document identified by
-        `_documentId`. 
+        `_documentId`.
         `_documentData` is the document payload.
         `_warning` is set to true if the document is received out of the commitment scope
     */
-    function onDocumentPosted(string memory _documentId, uint _documentData, bool _warning) internal virtual;
-    
+    function onDocumentPosted(string memory _documentId, uint _documentData, bool _warning) internal;
 }

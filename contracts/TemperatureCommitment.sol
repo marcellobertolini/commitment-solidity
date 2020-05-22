@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+pragma solidity ^0.5.0;
 import "./model/BlockchainCommitment.sol";
 import "./db/DB.sol";
 contract TemperatureCommitment is BlockchainCommitment {
@@ -11,18 +11,18 @@ contract TemperatureCommitment is BlockchainCommitment {
     }
 
 
-    function condC() internal override returns(bool) {
+    function condC() internal  returns(bool) {
         return db.isTemperatureValid(temperatureLimit);
     }
 
-    function condA() internal override returns(bool) {
+    function condA() internal  returns(bool) {
         return db.exist("startDelivery", true);
     }
 
-    function onDocumentPosted(string memory _documentId, uint _documentData, bool _warning) internal override {
+    function onDocumentPosted(string memory _documentId, uint _documentData, bool _warning) internal  {
         db.store(_documentId, _documentData, _warning);
     }
-    function onInitDocument(string memory _documentId, address _documentOwner) internal override{
+    function onInitDocument(string memory _documentId, address _documentOwner) internal {
         db.initDocument(_documentId, _documentOwner);
     }
 

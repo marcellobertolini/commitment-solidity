@@ -1,6 +1,6 @@
-pragma solidity ^0.6.0;
+pragma solidity ^0.5.0;
 
-abstract contract Commitment {
+contract Commitment {
 
     enum Strenghts {Hard, Soft}
     Strenghts strenght;
@@ -125,13 +125,40 @@ abstract contract Commitment {
     function getState() public view returns(States){
         return state;
     }
+    function getStateToString() public view returns(string memory) {
+        if(state == States.Null){
+            return "null";
+        }
+        else if(state == States.Detached){
+            return "detached";
+        }
+        else if(state == States.Conditional){
+            return "conditional";
+        }
+        else if(state == States.Violated){
+            return "violated";
+        }
+        else if(state == States.Satisfied){
+            return "satisfied";
+        }
+        else if(state == States.Terminated){
+            return "terminated";
+        }
+        else if(state == States.Expired){
+            return "expired";
+        }
+        else {
+            return "pending";
+        }
+
+    }
     function getRefC() public view returns(RefCs) {
         return refC;
     }
 
 
-    function condC() internal virtual returns(bool);
-    function condA() internal virtual returns(bool);
+    function condC() internal  returns(bool);
+    function condA() internal  returns(bool);
 
 
     function onTargetStarts() internal{
@@ -140,7 +167,7 @@ abstract contract Commitment {
             timeCreation = now;
             toConditional();
         }
-        
+
     }
 
     function onCancel() internal {
@@ -186,7 +213,7 @@ abstract contract Commitment {
             else {
                 toTerminated();
             }
-            
+
         }
         // from detached
         else if(state == States.Detached){
