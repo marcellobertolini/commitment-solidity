@@ -7,13 +7,13 @@ contract BlockchainCommitment is Commitment {
     address public debtor;
     address public creditor;
 
-    bool private creditorApproved;
-    bool private debtorApproved;
+    bool public creditorApproved;
+    bool public debtorApproved;
 
     enum ControlFlowStatus {OK, Warning}
-    ControlFlowStatus private warning;
+    ControlFlowStatus private warning = ControlFlowStatus.OK;
 
-    address private owner;
+    address public owner;
 
     mapping(string => address) private documentOwners;
 

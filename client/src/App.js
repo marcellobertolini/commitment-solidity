@@ -3,6 +3,8 @@ import { Drizzle } from 'drizzle';
 import { DrizzleContext } from "drizzle-react";
 
 import "./App.css";
+import Init from './Init';
+import Info from './Info';
 
 import drizzleOptions from "./drizzleOptions";
 import MyComponent from "./MyComponent";
@@ -13,7 +15,13 @@ class App extends Component {
   render() {
     return (
       <DrizzleContext.Provider drizzle={drizzle}>
-        <MyComponent />
+        <div className="App" >
+          <Init />
+          <hr />
+          <MyComponent />
+          <hr />
+          <Info />
+        </div>
       </DrizzleContext.Provider>
     );
   }

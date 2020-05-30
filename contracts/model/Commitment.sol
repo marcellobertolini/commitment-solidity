@@ -7,7 +7,7 @@ contract Commitment {
 
     // Commitment state machine
     enum States { Null, Expired, Terminated, Pending, Conditional, Detached, Satisfied, Violated}
-    States private state;
+    States private state = States.Null;
     States private lastState;
 
     enum Types {Goal, Persistent}
